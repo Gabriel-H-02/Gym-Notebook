@@ -4,7 +4,7 @@
 // Estrategia: la envoltura (HTML, CSS, JS, fuentes) se sirve desde caché y se
 // refresca por detrás. Los datos no pasan por aquí, viven en IndexedDB.
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE = 'cuaderno-entreno-' + VERSION;
 
 const ESENCIALES = [
@@ -86,8 +86,16 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
-  // Navegación: caché primero para que abra al instante y sin red.
+  // Navegación. Caché primero para que la app abra al instante y sin red, pero
+  // SOLO para la app en sí. Cualquier otra página dentro del mismo dominio
+  // (como /v1/, el cuaderno anterior) se deja pasar: si no, el service worker
+  // le devolvería la app nueva y el cuaderno viejo dejaría de ser accesible.
   if (req.mode === 'navigate') {
+    const base = new URL(self.registration.scope);
+    const esLaApp = url.pathname === base.pathname
+      || url.pathname === base.pathname + 'index.html';
+    if (!esLaApp) return;                      // a la red, sin tocar
+
     e.respondWith(
       caches.match('./index.html').then(c => c || fetch(req).catch(() => caches.match('./')))
     );
