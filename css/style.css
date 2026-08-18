@@ -524,3 +524,12 @@ body.con-timer { padding-bottom: calc(166px + env(safe-area-inset-bottom)); }
 .foto-full { flex-direction: column; gap: 14px; padding: 20px; }
 .foto-full img { max-width: 100%; max-height: 80vh; border-radius: 10px; object-fit: contain; }
 .foto-fecha { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--dim); }
+
+/* Día sin registrar: se ve el hueco, pero sin competir con los días que sí
+   tienen algo. Se puede tocar para rellenarlo. */
+.hrow.vacio .hd { color: var(--dim-2); font-weight: 400; }
+.hrow.vacio .hs { color: var(--dim-2); opacity: .75; }
+.hw-add { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px dashed var(--border); color: var(--dim-2); font-size: 15px;
+  line-height: 24px; text-align: center; }
+.hrow.vacio:active .hw-add { border-color: var(--accent); color: var(--accent); }

@@ -3,7 +3,8 @@
 
 import { el, vaciar, aviso, confirmar } from '../ui.js';
 import { estado, actualizar } from '../store.js';
-import { porId, variante, mostrarPeso, textoIntensidad, fechaCorta, bloques, textoSerie } from '../model.js';
+import { porId, variante, mostrarPeso, textoIntensidad, fechaCorta, hoyISO,
+  bloques, textoSerie } from '../model.js';
 import { editarDia } from './hoy.js';
 
 const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -61,22 +62,54 @@ export function pintarHistorial(cont, irA) {
     return;
   }
 
-  const semanas = {};
-  for (const f of fechas) (semanas[lunesDe(f)] ??= []).push(f);
+  // La semana se pinta entera, con los siete días. Los que no tienen nada
+  // salen igualmente, en gris: un hueco de tres días se ve de un vistazo, y
+  // antes sencillamente desaparecía.
+  const semanas = new Set(fechas.map(lunesDe));
+  const primero = fechas.at(-1);          // fechas viene de más nueva a más vieja
+  const hoy = hoyISO();
 
   const caja = el('div', { clase: 'card' });
-  for (const lunes of Object.keys(semanas).sort().reverse()) {
-    const dias = semanas[lunes];
-    const pesos = dias.map(f => estado.diario[f].pesoKg).filter(Boolean);
+  for (const lunes of [...semanas].sort().reverse()) {
+    // Ni antes de que empezaras a apuntar, ni días que aún no han llegado.
+    const dias = diasDeLaSemana(lunes).filter(f => f >= primero && f <= hoy);
+    const conDatos = dias.filter(f => estado.diario[f]);
+    const pesos = conDatos.map(f => estado.diario[f].pesoKg).filter(Boolean);
     const m = pesos.length ? pesos.reduce((a, b) => a + b, 0) / pesos.length : null;
 
     caja.append(el('div', { clase: 'whead' },
       el('span', { texto: 'Semana ' + etiquetaSemana(lunes) }),
-      el('span', { clase: 'wavg', texto: `${m ? 'media ' + mostrarPeso(m, u) + ' ' + u : '—'} · ${dias.length}d` })));
+      el('span', { clase: 'wavg',
+        texto: `${m ? 'media ' + mostrarPeso(m, u) + ' ' + u : '—'} · ${conDatos.length}/${dias.length}d` })));
 
-    for (const f of dias) caja.append(filaDia(cont, f, irA));
+    for (const f of dias) {
+      caja.append(estado.diario[f] ? filaDia(cont, f, irA) : filaVacia(cont, f, irA));
+    }
   }
   cont.append(caja);
+}
+
+const DIA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+
+function diasDeLaSemana(lunes) {
+  const d = new Date(lunes + 'T00:00:00');
+  return Array.from({ length: 7 }, (_, i) => {
+    const x = new Date(d); x.setDate(d.getDate() + i);
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  });
+}
+
+// Día sin nada apuntado. Se puede tocar para rellenarlo: olvidarse de anotar un
+// martes y poder volver a él es medio motivo de que exista esta fila.
+function filaVacia(cont, fecha, irA) {
+  const nombre = DIA[(new Date(fecha + 'T00:00:00').getDay() + 6) % 7];
+  const fila = el('div', { clase: 'hrow tap vacio' },
+    el('div', { clase: 'hrow-txt' },
+      el('div', { clase: 'hd', texto: fecha }),
+      el('div', { clase: 'hs', texto: nombre + ' · sin registrar' })),
+    el('span', { clase: 'hw-add', texto: '+' }));
+  fila.addEventListener('click', () => { editarDia(fecha, cont); irA('hoy'); });
+  return fila;
 }
 
 function filaDia(cont, fecha, irA) {
