@@ -33,6 +33,7 @@ export async function cargar() {
     if (!estado.medidas?.sitios) {
       estado.medidas = migrarMedidasV1(estado.medidas, null);
     }
+    await rellenarDescansos();
   } else if (guardado) {
     estado = { ...estadoInicial(), ...guardado, schema: SCHEMA };
   } else {
@@ -50,6 +51,25 @@ export async function cargar() {
   borrador = await db.get(CLAVE_BORRADOR, null);
   avisar();
   return { migrado, dias: Object.keys(estado.diario).length };
+}
+
+// El día de descanso llegó después de la primera migración, así que quien ya
+// se había pasado tenía esos días sin marcar. Como al migrar se guardó el
+// cuaderno original, se pueden recuperar sin tener que volver a importar nada.
+async function rellenarDescansos() {
+  const dias = Object.values(estado.diario);
+  if (!dias.some(d => d.descanso === undefined)) return;
+
+  const v1 = await db.get('v1-original');
+  const origen = v1?.mc_entries ?? {};
+  let n = 0;
+  for (const [fecha, d] of Object.entries(estado.diario)) {
+    if (d.descanso !== undefined) continue;
+    d.descanso = origen[fecha]?.session === 'Descanso';
+    if (d.descanso) n++;
+  }
+  await db.set(CLAVE, estado);
+  if (n) console.info(`Recuperados ${n} días de descanso del cuaderno anterior.`);
 }
 
 // ------------------------------------------------------------------ guardado

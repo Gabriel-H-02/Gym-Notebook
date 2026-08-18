@@ -533,3 +533,8 @@ body.con-timer { padding-bottom: calc(166px + env(safe-area-inset-bottom)); }
   border: 1px dashed var(--border); color: var(--dim-2); font-size: 15px;
   line-height: 24px; text-align: center; }
 .hrow.vacio:active .hw-add { border-color: var(--accent); color: var(--accent); }
+
+/* Día de descanso: se marca sin gritar. No es un hueco, es una decisión. */
+.card.descanso { border-style: dashed; }
+.hrow.es-descanso .hd { color: var(--dim); }
+.hrow.es-descanso .hs { color: var(--dim-2); }

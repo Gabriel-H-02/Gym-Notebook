@@ -25,7 +25,7 @@ export function iniciarHoja() {
 
 function hojaVacia(fecha) {
   return {
-    fecha, rutinaId: null, rutinaNombre: '',
+    fecha, rutinaId: null, rutinaNombre: '', descanso: false,
     diario: { pesoKg: null, suenoH: null, pasos: null, kcal: null, protG: null,
       carbG: null, grasaG: null, hambre: null, energia: null, notas: '' },
     entradas: [],
@@ -42,7 +42,9 @@ export function pintarHoy(cont) {
   cont.append(bloqueCabecera(cont));
   cont.append(bloqueDiario(cont));
   cont.append(bloqueEscalas(cont));
-  cont.append(bloqueEjercicios(cont));
+  // En un día de descanso el bloque de entrenamiento no pinta nada: lo que
+  // quieres apuntar es el peso, la comida y cómo has dormido.
+  cont.append(hoja.descanso ? bloqueDescanso() : bloqueEjercicios(cont));
   cont.append(bloqueNotas());
   cont.append(el('button', { clase: 'save', texto: 'Guardar día', onclick: () => guardarDia(cont) }));
 
@@ -64,10 +66,11 @@ function bloqueCabecera(cont) {
 
   const sel = el('select');
   sel.append(el('option', { value: '', texto: hoja.entradas.length ? '— libre —' : 'Elegir rutina…' }));
+  sel.append(el('option', { value: 'descanso', texto: 'Descanso' }));
   for (const r of estado.rutinas.filter(x => !x.archivada)) {
-    sel.append(el('option', { value: r.id, texto: r.nombre, selected: hoja.rutinaId === r.id }));
+    sel.append(el('option', { value: r.id, texto: r.nombre }));
   }
-  sel.value = hoja.rutinaId ?? '';
+  sel.value = hoja.descanso ? 'descanso' : (hoja.rutinaId ?? '');
   sel.addEventListener('change', () => cargarRutina(cont, sel.value, sel));
 
   return el('div', { clase: 'card' },
@@ -86,6 +89,12 @@ async function cargarRutina(cont, id, sel) {
     if (!ok) { sel.value = hoja.rutinaId ?? ''; return; }
   }
 
+  if (id === 'descanso') {
+    hoja.descanso = true; hoja.rutinaId = null; hoja.rutinaNombre = ''; hoja.entradas = [];
+    tocado(); pintarHoy(cont); return;
+  }
+
+  hoja.descanso = false;
   if (!id) { hoja.rutinaId = null; hoja.rutinaNombre = ''; hoja.entradas = []; tocado(); pintarHoy(cont); return; }
 
   const r = porId(estado.rutinas, id);
@@ -156,6 +165,12 @@ function bloqueEscalas() {
     escala('Hambre (1-10)', 'hambre'),
     el('div', { estilo: { height: '14px' } }),
     escala('Energía (1-10)', 'energia'));
+}
+
+function bloqueDescanso() {
+  return el('div', { clase: 'card descanso' },
+    el('span', { clase: 'label', texto: 'Día de descanso' }),
+    el('p', { clase: 'muted', texto: 'Sin entrenamiento. Sigue apuntando peso, comida y sueño, que es lo que hace que la media semanal tenga sentido.' }));
 }
 
 // ---------------------------------------------------------------- ejercicios
@@ -512,7 +527,7 @@ async function guardarDia(cont) {
     .filter(en => en.sets.length);
 
   actualizar(e => {
-    e.diario[fecha] = { fecha, ...hoja.diario };
+    e.diario[fecha] = { fecha, ...hoja.diario, descanso: hoja.descanso && !entradas.length };
     e.sesiones = e.sesiones.filter(s => s.fecha !== fecha);
     if (entradas.length) {
       e.sesiones.push({ id: nuevoId('se'), fecha, rutinaId: hoja.rutinaId,
@@ -522,11 +537,12 @@ async function guardarDia(cont) {
   });
 
   await borrarBorrador();
-  const rutinaId = hoja.rutinaId, rutinaNombre = hoja.rutinaNombre;
+  const rutinaId = hoja.rutinaId, rutinaNombre = hoja.rutinaNombre, descanso = hoja.descanso;
   hoja = hojaVacia(hoyISO());
-  hoja.rutinaId = rutinaId; hoja.rutinaNombre = rutinaNombre;
+  hoja.rutinaId = rutinaId; hoja.rutinaNombre = rutinaNombre; hoja.descanso = descanso;
   pintarHoy(cont);
-  aviso(`Guardado · ${entradas.length} ejercicio${entradas.length === 1 ? '' : 's'}`, 'ok');
+  aviso(descanso && !entradas.length ? 'Descanso guardado'
+    : `Guardado · ${entradas.length} ejercicio${entradas.length === 1 ? '' : 's'}`, 'ok');
 }
 
 // Cargar un día ya guardado para corregirlo.
@@ -534,7 +550,7 @@ export function editarDia(fecha, cont) {
   const s = estado.sesiones.find(x => x.fecha === fecha);
   const d = estado.diario[fecha];
   hoja = hojaVacia(fecha);
-  if (d) hoja.diario = { ...hoja.diario, ...d };
+  if (d) { hoja.diario = { ...hoja.diario, ...d }; hoja.descanso = d.descanso === true; }
   if (s) {
     hoja.rutinaId = s.rutinaId;
     hoja.rutinaNombre = s.rutinaNombre;

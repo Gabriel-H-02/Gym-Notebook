@@ -388,6 +388,10 @@ export function migrarV1(v1) {
       kcal: leerNumero(e.kcal), protG: leerNumero(e.prot), carbG: leerNumero(e.carb),
       grasaG: leerNumero(e.fat), hambre: e.hunger ?? null, energia: e.energy ?? null,
       notas: e.notes || '',
+      // El cuaderno viejo ya marcaba los días de descanso. Esa información se
+      // estaba perdiendo: un día de descanso y un día que no apuntaste
+      // quedaban igual.
+      descanso: e.session === 'Descanso',
     };
 
     const exs = e.exercises ?? [];

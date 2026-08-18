@@ -116,13 +116,15 @@ function filaDia(cont, fecha, irA) {
   const d = estado.diario[fecha];
   const s = estado.sesiones.find(x => x.fecha === fecha);
   const u = estado.ajustes.unidad;
+  // Descanso y "no apunté el entreno" no son lo mismo, y antes se veían igual.
+  const que = s ? (s.rutinaNombre || 'Entreno') : (d.descanso ? 'Descanso' : 'Sin entreno');
   const resumen = [
-    s ? (s.rutinaNombre || 'Entreno') : 'Descanso',
+    que,
     d.protG ? `P${d.protG}g` : null,
     d.kcal ? `${d.kcal}kcal` : null,
   ].filter(Boolean).join(' · ');
 
-  const fila = el('div', { clase: 'hrow tap' },
+  const fila = el('div', { clase: 'hrow tap' + (!s && d.descanso ? ' es-descanso' : '') },
     el('div', { clase: 'hrow-txt' },
       el('div', { clase: 'hd', texto: fecha }),
       el('div', { clase: 'hs', texto: resumen })),
@@ -157,7 +159,8 @@ function desplegar(fila, fecha, cont, irA) {
           + (textoIntensidad(x.intensidad) ? '/' + textoIntensidad(x.intensidad) : '')).join(', ') })));
     }
   } else {
-    det.append(el('p', { clase: 'muted', texto: 'Día sin entreno.' }));
+    det.append(el('p', { clase: 'muted',
+      texto: d.descanso ? 'Día de descanso.' : 'Sin entreno apuntado ese día.' }));
   }
 
   if (d.notas) det.append(el('p', { clase: 'hnota', texto: d.notas }));
