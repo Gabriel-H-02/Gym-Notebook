@@ -4,7 +4,7 @@
 // Estrategia: la envoltura (HTML, CSS, JS, fuentes) se sirve desde caché y se
 // refresca por detrás. Los datos no pasan por aquí, viven en IndexedDB.
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'cuaderno-entreno-' + VERSION;
 
 const ESENCIALES = [
@@ -17,6 +17,7 @@ const ESENCIALES = [
   './js/model.js',
   './js/store.js',
   './js/ui.js',
+  './js/iconos.js',
   './js/timer.js',
   './js/media.js',
   './js/catalogo.js',

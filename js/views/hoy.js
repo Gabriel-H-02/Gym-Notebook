@@ -10,6 +10,7 @@ import {
   bloques, textoSerie, unidos, unir, separar,
 } from '../model.js';
 import { elegirEjercicio, elegirVariante, editarEjercicio } from './selector.js';
+import { icono } from '../iconos.js';
 import { iniciar as iniciarDescanso, descansoDe, mmss, despertarAudio } from '../timer.js';
 
 // Lo que se está tecleando ahora. Vive aquí y se vuelca al borrador en cada
@@ -184,7 +185,8 @@ function bloqueEjercicios(cont) {
     el('div', { clase: 'card-top' },
       el('span', { clase: 'label', texto: 'Entrenamiento' }),
       hoja.entradas.length
-        ? el('button', { clase: 'btn-txt', texto: '⧉ Copiar última vez', onclick: () => copiarUltima(cont) })
+        ? el('button', { clase: 'btn-txt', onclick: () => copiarUltima(cont) },
+            icono('copiar', { tam: 13 }), 'Copiar última vez')
         : null),
     hoja.entradas.length ? lista
       : el('p', { clase: 'muted', texto: 'Elige una rutina arriba, o añade ejercicios sueltos.' }),
@@ -231,15 +233,15 @@ function filaEjercicio(cont, en, i, bl) {
         texto: va ? va.nombre + (porLado ? ' · por lado' : '') : '+ variante',
         onclick: async () => { const v = await elegirVariante(ej); if (v) { en.vaId = v.vaId; tocado(); pintarHoy(cont); } } })),
     el('div', { clase: 'mv' },
-      el('button', { texto: '▲', 'aria-label': 'Subir', onclick: () => mover(-1) }),
-      el('button', { texto: '▼', 'aria-label': 'Bajar', onclick: () => mover(1) })),
-    el('button', { clase: 'del', texto: '×', 'aria-label': 'Quitar ejercicio', onclick: async () => {
+      el('button', { 'aria-label': 'Subir', onclick: () => mover(-1) }, icono('subir', { tam: 15 })),
+      el('button', { 'aria-label': 'Bajar', onclick: () => mover(1) }, icono('bajar', { tam: 15 }))),
+    el('button', { clase: 'del', 'aria-label': 'Quitar ejercicio', onclick: async () => {
       const conDatos = en.sets.some(s => s.pesoKg !== null || s.reps !== null);
       if (conDatos && !await confirmar('¿Quitar el ejercicio?', 'Tiene series apuntadas.', { ok: 'Quitar', peligro: true })) return;
       hoja.entradas = hoja.entradas.filter(x => x.id !== en.id);
       hoja.entradas.forEach((x, k) => { x.orden = k; });
       tocado(); pintarHoy(cont);
-    } })));
+    } }, icono('cerrar', { tam: 19 }))));
 
   // referencia: la última vez que hiciste ESTE ejercicio, sea el día que sea
   const uv = ultimaVez(estado, en.exId, en.vaId, hoja.fecha);
@@ -278,7 +280,7 @@ function botonDescanso(cont, ej) {
 
   const b = el('button', { clase: 'ex-descanso' + (propio ? ' propio' : ''),
     'aria-label': 'Iniciar descanso de ' + mmss(seg) },
-    el('span', { clase: 'ed-ic', texto: '⏱' }),
+    icono('crono', { tam: 15 }),
     el('span', { texto: mmss(seg) }));
 
   b.addEventListener('click', () => { despertarAudio(); iniciarDescanso(seg, ej.nombre); });
@@ -340,6 +342,7 @@ function botonBloque(cont, en, i) {
     } },
     // Sin icono a propósito: el emoji de cadena no está en las fuentes que
     // empaquetamos y salía como caja vacía. La barra lateral ya marca el bloque.
+    icono('unir', { tam: 13 }),
     el('span', { clase: 'ex-bloque-t', texto: juntos ? 'Separar' : 'Unir' }));
 }
 
@@ -384,14 +387,14 @@ function filaDrop(cont, en, s, d, j) {
   reps.addEventListener('input', () => { d.reps = leerNumero(reps.value); tocado(); });
 
   return el('div', { clase: 'set drop' },
-    el('span', { clase: 'si', texto: '↳' }),
+    el('span', { clase: 'si' }, icono('bajada', { tam: 13 })),
     el('div', { clase: 'set-peso' }, peso),
     el('span', { clase: 'x', texto: '×' }),
     reps,
-    el('button', { clase: 'del sm', texto: '×', 'aria-label': 'Borrar bajada', onclick: () => {
+    el('button', { clase: 'del sm', 'aria-label': 'Borrar bajada', onclick: () => {
       s.drops = s.drops.filter(x => x.id !== d.id);
       tocado(); pintarHoy(cont);
-    } }));
+    } }, icono('cerrar', { tam: 15 })));
 }
 
 function filaSerie(cont, en, s, k, porLado, ej, g) {
@@ -446,11 +449,11 @@ function filaSerie(cont, en, s, k, porLado, ej, g) {
     el('span', { clase: 'x', texto: '×' }),
     reps,
     selectorIntensidad(s),
-    el('button', { clase: 'del sm', texto: '×', 'aria-label': 'Borrar serie', onclick: () => {
+    el('button', { clase: 'del sm', 'aria-label': 'Borrar serie', onclick: () => {
       en.sets = en.sets.filter(x => x.id !== s.id);
       if (!en.sets.length) en.sets.push(setVacio());
       tocado(); pintarHoy(cont);
-    } }));
+    } }, icono('cerrar', { tam: 15 })));
 
   if (!s.drops?.length) return fila;
   return el('div', { clase: 'set-grupo' }, fila,

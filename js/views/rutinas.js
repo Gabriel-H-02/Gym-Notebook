@@ -9,6 +9,7 @@
 import { el, vaciar, aviso, confirmar, pedirTexto } from '../ui.js';
 import { estado, actualizar } from '../store.js';
 import { nuevoId, porId, variante, varianteActiva, bloques, unidos, unir, separar } from '../model.js';
+import { icono } from '../iconos.js';
 import { elegirEjercicio, elegirVariante, elegirGrupo, editarEjercicio } from './selector.js';
 
 let editando = null;   // id de la rutina abierta, o null para el listado
@@ -50,7 +51,7 @@ function filaRutina(cont, r) {
     el('div', {},
       el('div', { clase: 'hd', texto: r.nombre }),
       el('div', { clase: 'hs', texto: n ? `${n} ejercicio${n === 1 ? '' : 's'}` : 'vacía' })),
-    el('span', { clase: 'chevron', texto: '›' }));
+    icono('derecha', { clase: 'chevron', tam: 18 }));
 }
 
 // ------------------------------------------------------------------- editor
@@ -58,13 +59,13 @@ function pintarEditor(cont, r) {
   const volver = () => { editando = null; pintarRutinas(cont); };
 
   cont.append(el('div', { clase: 'barra-vuelta' },
-    el('button', { clase: 'btn-volver', onclick: volver }, '‹ Rutinas'),
-    el('button', { clase: 'btn-txt', texto: 'Renombrar', onclick: async () => {
+    el('button', { clase: 'btn-volver', onclick: volver }, icono('izquierda', { tam: 15 }), 'Rutinas'),
+    el('button', { clase: 'btn-txt', onclick: async () => {
       const n = await pedirTexto('Nombre de la rutina', r.nombre);
       if (!n) return;
       actualizar(() => { r.nombre = n; });
       pintarRutinas(cont);
-    } })));
+    } }, icono('editar', { tam: 13 }), 'Renombrar')));
 
   cont.append(el('h2', { clase: 'titulo-sec', texto: r.nombre }));
 
@@ -86,19 +87,19 @@ function pintarEditor(cont, r) {
   cont.append(el('div', { clase: 'card' },
     el('span', { clase: 'label', texto: 'Acciones' }),
     el('div', { clase: 'row' },
-      el('button', { clase: 'addbtn', estilo: { marginTop: 0 }, texto: '⧉ Duplicar', onclick: () => {
+      el('button', { clase: 'addbtn con-ic', estilo: { marginTop: 0 }, onclick: () => {
         const copia = { ...r, id: nuevoId('rt'), nombre: r.nombre + ' (copia)',
           items: r.items.map(i => ({ ...i, id: nuevoId('it') })) };
         actualizar(e => e.rutinas.push(copia));
         editando = copia.id;
         pintarRutinas(cont);
         aviso('Rutina duplicada');
-      } }),
-      el('button', { clase: 'addbtn', estilo: { marginTop: 0 },
-        texto: r.archivada ? '⤒ Desarchivar' : '⤓ Archivar', onclick: () => {
-          actualizar(() => { r.archivada = !r.archivada; });
-          volver();
-        } })),
+      } }, icono('copiar', { tam: 14 }), 'Duplicar'),
+      el('button', { clase: 'addbtn con-ic', estilo: { marginTop: 0 }, onclick: () => {
+        actualizar(() => { r.archivada = !r.archivada; });
+        volver();
+      } }, icono(r.archivada ? 'restaurar' : 'descargar', { tam: 14 }),
+         r.archivada ? 'Desarchivar' : 'Archivar')),
     el('button', { clase: 'addbtn peligro', texto: 'Borrar rutina', onclick: async () => {
       const usada = estado.sesiones.some(s => s.rutinaId === r.id);
       const ok = await confirmar('¿Borrar la rutina?',
@@ -141,14 +142,14 @@ function itemRutina(cont, r, it, i, bl) {
           : el('button', { clase: 'rt-var vacia', texto: '+ variante',
             onclick: async () => { const v = await elegirVariante(ej); if (v) { actualizar(() => { it.vaId = v.vaId; }); pintarRutinas(cont); } } })),
       el('div', { clase: 'mv' },
-        el('button', { texto: '▲', 'aria-label': 'Subir', onclick: () => mover(-1) }),
-        el('button', { texto: '▼', 'aria-label': 'Bajar', onclick: () => mover(1) })),
-      el('button', { clase: 'del', texto: '×', 'aria-label': 'Quitar', onclick: async () => {
+        el('button', { 'aria-label': 'Subir', onclick: () => mover(-1) }, icono('subir', { tam: 15 })),
+        el('button', { 'aria-label': 'Bajar', onclick: () => mover(1) }, icono('bajar', { tam: 15 }))),
+      el('button', { clase: 'del', 'aria-label': 'Quitar', onclick: async () => {
         const ok = await confirmar('¿Quitar de la rutina?', ej.nombre, { ok: 'Quitar', peligro: true });
         if (!ok) return;
         actualizar(() => { r.items = r.items.filter(x => x.id !== it.id); r.items.forEach((x, k) => { x.orden = k; }); });
         pintarRutinas(cont);
-      } })),
+      } }, icono('cerrar', { tam: 19 }))),
     el('div', { clase: 'rt-cfg' },
       campoNum('Series', it.seriesObjetivo, v => actualizar(() => { it.seriesObjetivo = v ?? 3; })),
       campoNum('Descanso (s)', it.descansoSeg, v => actualizar(() => { it.descansoSeg = v; }),
@@ -169,12 +170,11 @@ function botonUnir(cont, r, it, i) {
 
   const juntos = unidos(it, siguiente);
   return el('button', { clase: 'rt-unir' + (juntos ? ' on' : ''),
-    texto: juntos ? 'Separar' : 'Unir',
     'aria-label': juntos ? 'Separar del siguiente' : 'Unir en superserie con el siguiente',
     onclick: () => {
       actualizar(() => { if (juntos) separar(r.items, i); else unir(r.items, i); });
       pintarRutinas(cont);
-    } });
+    } }, icono('unir', { tam: 13 }), juntos ? 'Separar' : 'Unir');
 }
 
 function campoNum(etiqueta, valor, alCambiar, marcador = '') {

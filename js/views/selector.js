@@ -5,6 +5,7 @@ import { el, hoja, pedirTexto, aviso } from '../ui.js';
 import { estado, actualizar } from '../store.js';
 import { nuevoId, varianteActiva, nombreCompleto } from '../model.js';
 import { imagen, miniaturaDe, animacionDe, activo as mediaActiva, PROVEEDOR } from '../media.js';
+import { icono } from '../iconos.js';
 import { cargarCatalogo, buscarCatalogo, gruposCatalogo, FAMILIAS } from '../catalogo.js';
 
 const sinAcentos = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -114,7 +115,7 @@ export function elegirEjercicio({ titulo = 'Elegir ejercicio' } = {}) {
             const ej = crearEjercicio(q, g);
             aviso(`"${ej.nombre}" añadido a tu catálogo`);
             terminar({ exId: ej.id, vaId: null }, cerrar);
-          } }, el('span', { clase: 'sel-crear-mas', texto: '+' }),
+          } }, icono('mas', { clase: 'sel-crear-mas', tam: 17 }),
              el('span', { texto: `Crear "${q}" a mano` })));
         }
 
@@ -174,7 +175,8 @@ function filaCatalogo(c, cerrar, terminar) {
         sinAcentos(c.nombre).includes(sinAcentos(c.equipo))
           ? null : el('span', { clase: 'sel-eq', texto: c.equipo })),
       el('span', { clase: 'sel-grupo', texto: c.grupo })),
-    el('button', { clase: 'sel-mas', texto: '+', 'aria-label': `Añadir ${c.nombre}`, onclick: anadir }));
+    el('button', { clase: 'sel-mas', 'aria-label': `Añadir ${c.nombre}`, onclick: anadir },
+      icono('mas', { tam: 18 })));
   return f;
 }
 
@@ -266,7 +268,7 @@ export function elegirVariante(ej) {
           ej.variantes.push(v);
         });
         cerrar(); res({ vaId: v.id });
-      } }, el('span', { clase: 'sel-crear-mas', texto: '+' }), el('span', { texto: 'Nueva variante' })));
+      } }, icono('mas', { clase: 'sel-crear-mas', tam: 17 }), el('span', { texto: 'Nueva variante' })));
       cuerpo.append(l);
     });
   });

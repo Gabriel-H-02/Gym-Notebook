@@ -11,6 +11,7 @@ import { porId, variante, mostrarPeso, textoIntensidad, fechaCorta } from '../mo
 import { linea, tabla, SERIES } from '../grafico.js';
 import { imagen, activo as mediaActiva, PROVEEDOR } from '../media.js';
 import { pintarCuerpo } from './cuerpo.js';
+import { icono } from '../iconos.js';
 
 let abierto = null;      // id del ejercicio abierto, o null para el listado
 let verTabla = false;
@@ -64,7 +65,7 @@ function pintarListado(cont) {
         el('div', { clase: 'hd', texto: ej.nombre }),
         el('div', { clase: 'hs', texto: `${n} sesion${n === 1 ? '' : 'es'} · última ${fechaCorta(ultimo.get(ej.id))}` })),
       ult ? el('div', { clase: 'hw', texto: mostrarPeso(ult.valor, estado.ajustes.unidad) + estado.ajustes.unidad }) : null,
-      el('span', { clase: 'chevron', texto: '›' })));
+      icono('derecha', { clase: 'chevron', tam: 18 })));
   }
   cont.append(caja);
 }
@@ -75,7 +76,8 @@ function pintarDetalle(cont, ej) {
   const ser = seriesDe(ej);
 
   cont.append(el('div', { clase: 'barra-vuelta' },
-    el('button', { clase: 'btn-volver', onclick: () => { abierto = null; pintarProgreso(cont); } }, '‹ Progreso'),
+    el('button', { clase: 'btn-volver', onclick: () => { abierto = null; pintarProgreso(cont); } },
+      icono('izquierda', { tam: 15 }), 'Progreso'),
     el('button', { clase: 'btn-txt', texto: verTabla ? 'Ver gráfico' : 'Ver tabla',
       onclick: () => { verTabla = !verTabla; pintarProgreso(cont); } })));
 

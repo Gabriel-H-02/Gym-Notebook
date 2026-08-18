@@ -12,6 +12,7 @@ import {
 } from '../model.js';
 import { linea, tabla, SERIES } from '../grafico.js';
 import { guardarFoto, urlFoto, borrarFoto } from '../fotos.js';
+import { icono } from '../iconos.js';
 
 let seccion = 'peso';      // peso | medidas | fotos
 let sitioAbierto = null;
@@ -112,7 +113,7 @@ function pintarMedidas(cont) {
       el('div', { clase: 'hw', texto: mostrarMedida(fin, estado.ajustes.unidad) + um }),
       el('span', { clase: 'delta' + (d === 0 ? '' : d > 0 ? ' sube' : ' baja'),
         texto: conDato.length > 1 ? (d > 0 ? '+' : '') + mostrarMedida(d, estado.ajustes.unidad) : '' }),
-      el('span', { clase: 'chevron', texto: '›' })));
+      icono('derecha', { clase: 'chevron', tam: 18 })));
   }
   // La tarjeta de resumen solo aparece cuando hay algo que resumir.
   if (caja.children.length > 1) cont.append(caja);
@@ -125,7 +126,7 @@ function pintarMedidas(cont) {
       el('div', { clase: 'hrow-txt' },
         el('div', { clase: 'hd', texto: r.fecha }),
         el('div', { clase: 'hs', texto: `${n} zona${n === 1 ? '' : 's'}${r.notas ? ' · ' + r.notas.slice(0, 40) : ''}` })),
-      el('span', { clase: 'chevron', texto: '✎' })));
+      icono('editar', { clase: 'chevron', tam: 15 })));
   }
   if (m.registros.length) cont.append(hist);
 
@@ -149,7 +150,7 @@ function filaSitio(cont, s) {
     el('span', { clase: 'sitio-n', texto: s.nombre }),
     el('button', { clase: 'sitio-b' + (s.bilateral ? ' on' : ''), texto: 'por lado',
       onclick: () => { actualizar(() => { s.bilateral = !s.bilateral; }); pintarCuerpo(cont); } }),
-    el('button', { clase: 'del sm', texto: '×', 'aria-label': `Quitar ${s.nombre}`, onclick: async () => {
+    el('button', { clase: 'del sm', 'aria-label': `Quitar ${s.nombre}`, onclick: async () => {
       const usada = estado.medidas.registros.some(r => r.valores[s.id]);
       if (!await confirmar(`¿Quitar ${s.nombre}?`,
         usada ? 'Las mediciones que ya tiene se borran con ella.' : '', { ok: 'Quitar', peligro: true })) return;
@@ -158,7 +159,7 @@ function filaSitio(cont, s) {
         for (const r of e.medidas.registros) delete r.valores[s.id];
       });
       pintarCuerpo(cont);
-    } }));
+    } }, icono('cerrar', { tam: 15 })));
 }
 
 // Formulario de medición. Se abre con los últimos valores como marcador, para
@@ -183,7 +184,8 @@ function editarMedicion(cont, reg, esNueva = false) {
 
   vaciar(cont);
   cont.append(el('div', { clase: 'barra-vuelta' },
-    el('button', { clase: 'btn-volver', onclick: () => pintarCuerpo(cont) }, '‹ Medidas')));
+    el('button', { clase: 'btn-volver', onclick: () => pintarCuerpo(cont) },
+      icono('izquierda', { tam: 15 }), 'Medidas')));
   cont.append(el('h2', { clase: 'titulo-sec', texto: esNueva ? 'Nueva medición' : 'Medición' }));
 
   const fecha = el('input', { type: 'date', value: copia.fecha });
@@ -254,7 +256,8 @@ function pintarSitio(cont, s) {
   const um = unidadMedida(estado.ajustes);
 
   cont.append(el('div', { clase: 'barra-vuelta' },
-    el('button', { clase: 'btn-volver', onclick: () => { sitioAbierto = null; pintarCuerpo(cont); } }, '‹ Medidas'),
+    el('button', { clase: 'btn-volver', onclick: () => { sitioAbierto = null; pintarCuerpo(cont); } },
+      icono('izquierda', { tam: 15 }), 'Medidas'),
     el('button', { clase: 'btn-txt', texto: verTabla ? 'Ver gráfico' : 'Ver tabla',
       onclick: () => { verTabla = !verTabla; pintarCuerpo(cont); } })));
   cont.append(el('h2', { clase: 'titulo-sec', texto: s.nombre }));
@@ -349,7 +352,7 @@ function celdaFoto(cont, reg, id) {
     if (!src) { c.append(el('span', { clase: 'muted', texto: 'no está' })); return; }
     c.append(el('img', { src, alt: `Foto de ${reg.fecha}`, loading: 'lazy',
       onclick: () => ampliar(src, reg.fecha) }));
-    c.append(el('button', { clase: 'foto-x', texto: '×', 'aria-label': 'Borrar foto', onclick: async () => {
+    c.append(el('button', { clase: 'foto-x', 'aria-label': 'Borrar foto', onclick: async () => {
       if (!await confirmar('¿Borrar la foto?', '', { ok: 'Borrar', peligro: true })) return;
       await borrarFoto(id);
       actualizar(e => {
@@ -359,7 +362,7 @@ function celdaFoto(cont, reg, id) {
           .filter(x => x.fotos?.length || Object.keys(x.valores).length);
       });
       pintarCuerpo(cont);
-    } }));
+    } }, icono('cerrar', { tam: 15 })));
   });
   return c;
 }

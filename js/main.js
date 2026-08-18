@@ -6,13 +6,14 @@ import { pintarHistorial } from './views/historial.js';
 import { pintarProgreso } from './views/progreso.js';
 import { pintarAjustes } from './views/ajustes.js';
 import { fechaCorta } from './model.js';
+import { icono } from './iconos.js';
 
 const vistas = {
-  hoy:       { icono: 'H', titulo: 'Hoy',       pintar: c => pintarHoy(c) },
-  rutinas:   { icono: 'R', titulo: 'Rutinas',   pintar: c => pintarRutinas(c) },
-  progreso:  { icono: '◹', titulo: 'Progreso',  pintar: c => pintarProgreso(c) },
-  historial: { icono: '⌗', titulo: 'Historial', pintar: c => pintarHistorial(c, irA) },
-  ajustes:   { icono: '⚙', titulo: 'Ajustes',   pintar: c => pintarAjustes(c, () => irA(actual)) },
+  hoy:       { ic: 'hoy',       titulo: 'Hoy',       pintar: c => pintarHoy(c) },
+  rutinas:   { ic: 'rutinas',   titulo: 'Rutinas',   pintar: c => pintarRutinas(c) },
+  progreso:  { ic: 'progreso',  titulo: 'Progreso',  pintar: c => pintarProgreso(c) },
+  historial: { ic: 'historial', titulo: 'Historial', pintar: c => pintarHistorial(c, irA) },
+  ajustes:   { ic: 'ajustes',   titulo: 'Ajustes',   pintar: c => pintarAjustes(c, () => irA(actual)) },
 };
 
 let actual = 'hoy';
@@ -29,7 +30,7 @@ function montarBarra() {
   const barra = document.querySelector('.tabbar');
   for (const [k, v] of Object.entries(vistas)) {
     barra.append(el('button', { datos: { v: k }, clase: k === actual ? 'on' : '', onclick: () => irA(k) },
-      el('span', { clase: 'ic', texto: v.icono }), v.titulo));
+      icono(v.ic, { tam: 21 }), v.titulo));
   }
 }
 

@@ -6,6 +6,7 @@ import { estado, actualizar } from '../store.js';
 import { porId, variante, mostrarPeso, textoIntensidad, fechaCorta, hoyISO,
   bloques, textoSerie } from '../model.js';
 import { editarDia } from './hoy.js';
+import { icono } from '../iconos.js';
 
 const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
@@ -107,7 +108,7 @@ function filaVacia(cont, fecha, irA) {
     el('div', { clase: 'hrow-txt' },
       el('div', { clase: 'hd', texto: fecha }),
       el('div', { clase: 'hs', texto: nombre + ' · sin registrar' })),
-    el('span', { clase: 'hw-add', texto: '+' }));
+    icono('mas', { clase: 'hw-add', tam: 16 }));
   fila.addEventListener('click', () => { editarDia(fecha, cont); irA('hoy'); });
   return fila;
 }
@@ -166,9 +167,9 @@ function desplegar(fila, fecha, cont, irA) {
   if (d.notas) det.append(el('p', { clase: 'hnota', texto: d.notas }));
 
   det.append(el('div', { clase: 'row', estilo: { marginTop: '10px' } },
-    el('button', { clase: 'addbtn', estilo: { marginTop: 0 }, texto: '✎ Editar', onclick: () => {
+    el('button', { clase: 'addbtn con-ic', estilo: { marginTop: 0 }, onclick: () => {
       editarDia(fecha, cont); irA('hoy');
-    } }),
+    } }, icono('editar', { tam: 14 }), 'Editar'),
     el('button', { clase: 'addbtn peligro', estilo: { marginTop: 0 }, texto: 'Borrar día', onclick: async () => {
       if (!await confirmar('¿Borrar el día?', fechaCorta(fecha) + '. No se puede deshacer.', { ok: 'Borrar', peligro: true })) return;
       actualizar(e => { delete e.diario[fecha]; e.sesiones = e.sesiones.filter(x => x.fecha !== fecha); });

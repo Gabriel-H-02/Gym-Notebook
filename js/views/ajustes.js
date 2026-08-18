@@ -6,6 +6,7 @@ import { pedirPersistencia, espacioUsado } from '../db.js';
 import { pedirPermisoAviso } from '../timer.js';
 import { PROVEEDOR, olvidarTodo, espacioMedia } from '../media.js';
 import { pesoFotos } from '../fotos.js';
+import { icono } from '../iconos.js';
 import { ESCALAS, hoyISO, diasDesde, mostrarPeso } from '../model.js';
 
 export function pintarAjustes(cont, refrescar) {
@@ -83,18 +84,18 @@ export function pintarAjustes(cont, refrescar) {
       ? 'Nunca has hecho una copia. Descárgala y guárdala fuera del móvil.'
       : dias === 0 ? 'Última copia hoy.'
       : `Última copia hace ${dias} día${dias === 1 ? '' : 's'}.` }),
-    el('button', { clase: 'save', estilo: { marginTop: '10px' }, texto: '⤓ Descargar copia', onclick: async () => {
+    el('button', { clase: 'save con-ic', estilo: { marginTop: '10px' }, onclick: async () => {
       aviso('Preparando la copia…');
       const txt = await exportar();
       descargar(`cuaderno-entreno-${hoyISO()}.json`, txt);
       actualizar(() => { a.ultimaCopia = hoyISO(); });
       aviso('Copia descargada');
       refrescar();
-    } }),
+    } }, icono('descargar', { tam: 17 }), 'Descargar copia'),
     el('div', { clase: 'row', estilo: { marginTop: '10px' } },
-      el('button', { clase: 'addbtn', estilo: { marginTop: 0 }, texto: '⧉ Copiar al portapapeles', onclick: async () => {
+      el('button', { clase: 'addbtn con-ic', estilo: { marginTop: 0 }, onclick: async () => {
         aviso(await copiar(await exportar()) ? 'Copiado' : 'No se ha podido copiar');
-      } }),
+      } }, icono('copiar', { tam: 14 }), 'Copiar'),
       botonImportar(refrescar))));
 
   // ------------------------------------------------------ almacenamiento
@@ -153,7 +154,7 @@ function botonAvisos() {
   const estadoPerm = ('Notification' in window) ? Notification.permission : 'no';
   if (estadoPerm === 'granted') {
     return el('p', { clase: 'ok-txt', estilo: { marginTop: '10px' },
-      texto: '✓ Avisos activados. Si tienes la app en segundo plano, te llega una notificación al acabar el descanso.' });
+      texto: 'Avisos activados. Si tienes la app en segundo plano, te llega una notificación al acabar el descanso.' });
   }
   if (estadoPerm === 'no' || estadoPerm === 'denied') {
     return el('p', { clase: 'muted', estilo: { marginTop: '10px' },
@@ -206,8 +207,8 @@ function botonImportar(refrescar) {
       aviso('El archivo no es válido');
     } finally { inp.value = ''; }
   });
-  return el('label', { clase: 'addbtn', estilo: { marginTop: 0, textAlign: 'center', cursor: 'pointer' } },
-    '⤒ Restaurar copia', inp);
+  return el('label', { clase: 'addbtn con-ic', estilo: { marginTop: 0, cursor: 'pointer' } },
+    icono('restaurar', { tam: 14 }), 'Restaurar', inp);
 }
 
 async function informarAlmacenamiento(caja) {
@@ -219,7 +220,7 @@ async function informarAlmacenamiento(caja) {
   caja.append(el('span', { clase: 'label', texto: 'Almacenamiento' }));
 
   if (p.concedido) {
-    caja.append(el('p', { clase: 'ok-txt', texto: '✓ Almacenamiento persistente concedido. El navegador no va a borrar tus datos para hacer sitio.' }));
+    caja.append(el('p', { clase: 'ok-txt', texto: 'Almacenamiento persistente concedido. El navegador no va a borrar tus datos para hacer sitio.' }));
   } else if (p.soportado) {
     caja.append(el('p', { clase: 'muted', texto: 'El navegador no ha concedido almacenamiento persistente. Instala la app en la pantalla de inicio para que sea más probable, y descarga copias con regularidad.' }));
   } else {

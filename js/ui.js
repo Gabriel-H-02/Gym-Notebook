@@ -2,6 +2,8 @@
 // texto entra por textContent, así un nombre de ejercicio con un < no rompe
 // nada ni ejecuta nada.
 
+import { icono } from './iconos.js';
+
 export function el(tag, props = {}, ...hijos) {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
@@ -74,7 +76,7 @@ export function hoja(titulo, contenido) {
     el('div', { clase: 'hoja' },
       el('div', { clase: 'hoja-top' },
         el('h3', { texto: titulo }),
-        el('button', { clase: 'del', texto: '×', 'aria-label': 'Cerrar', onclick: cerrar })),
+        el('button', { clase: 'del', 'aria-label': 'Cerrar', onclick: cerrar }, icono('cerrar', { tam: 20 }))),
       cuerpo));
   document.body.append(fondo);
   contenido(cuerpo, cerrar);
