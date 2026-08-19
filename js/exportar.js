@@ -25,21 +25,41 @@ export const RANGOS = [
   { id: 'rango', nombre: 'Entre dos fechas' },
 ];
 
-export function fechasDe(rango, desde = null, hasta = null) {
-  const todas = new Set([...Object.keys(estado.diario), ...estado.sesiones.map(s => s.fecha)]);
-  let lista = [...todas].sort();
-  const hoy = hoyISO();
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-  if (rango === 'hoy') return lista.filter(f => f === hoy);
-  if (rango === 'todo') return lista;
-  if (rango === 'rango') {
-    return lista.filter(f => (!desde || f >= desde) && (!hasta || f <= hasta));
+// Devuelve TODOS los días del tramo, tenga cada uno datos o no.
+//
+// Antes solo devolvía los días con algo apuntado, y eso dejaba huecos: un
+// sábado sin registrar sencillamente no aparecía, así que el CSV saltaba del
+// viernes al domingo. En una hoja de cálculo eso se ve como una semana de seis
+// días, y cualquier gráfico sale con la línea rota sin avisar.
+export function fechasDe(rango, desde = null, hasta = null) {
+  const conDatos = [...new Set([...Object.keys(estado.diario), ...estado.sesiones.map(s => s.fecha)])].sort();
+  if (!conDatos.length) return [];
+
+  const hoy = hoyISO();
+  const primero = conDatos[0];
+  let min, max;
+
+  if (rango === 'hoy') { min = max = hoy; }
+  else if (rango === 'todo') { min = primero; max = hoy; }
+  else if (rango === 'rango') { min = desde || primero; max = hasta || hoy; }
+  else {
+    const t = new Date(hoy + 'T00:00:00');
+    t.setDate(t.getDate() - (Number(rango) - 1));
+    min = iso(t); max = hoy;
   }
-  const n = Number(rango);
-  const tope = new Date(hoy + 'T00:00:00');
-  tope.setDate(tope.getDate() - (n - 1));
-  const min = `${tope.getFullYear()}-${String(tope.getMonth() + 1).padStart(2, '0')}-${String(tope.getDate()).padStart(2, '0')}`;
-  return lista.filter(f => f >= min && f <= hoy);
+
+  // Ni antes de que empezaras a apuntar, ni días que aún no han llegado.
+  if (min < primero) min = primero;
+  if (max > hoy) max = hoy;
+  if (min > max) return [];
+
+  const salida = [];
+  for (let d = new Date(min + 'T00:00:00'); iso(d) <= max; d.setDate(d.getDate() + 1)) {
+    salida.push(iso(d));
+  }
+  return salida;
 }
 
 // -------------------------------------------------------- resumen para pegar
@@ -123,6 +143,7 @@ export function textoCompleto(fechas) {
   for (const f of fechas) {
     const d = estado.diario[f];
     const s = estado.sesiones.find(x => x.fecha === f);
+    if (!d && !s) { L.push('─'.repeat(46), `${f}  Sin registrar`, ''); continue; }
     L.push('─'.repeat(46), `${f}  ${s ? (s.rutinaNombre || 'Entreno') : d?.descanso ? 'Descanso' : 'Sin entreno'}`);
 
     if (d) {
@@ -209,7 +230,7 @@ export function csvDiario(fechas) {
       f, DIA[new Date(f + 'T00:00:00').getDay()],
       num(mostrarPeso(d?.pesoKg, u)), num(d?.kcal), num(d?.protG), num(d?.carbG), num(d?.grasaG),
       num(d?.suenoH), num(d?.pasos), num(d?.hambre), num(d?.energia),
-      s ? (s.rutinaNombre || 'Entreno') : d?.descanso ? 'Descanso' : '',
+      s ? (s.rutinaNombre || 'Entreno') : d?.descanso ? 'Descanso' : d ? 'Sin entreno' : 'Sin registrar',
       (d?.notas ?? '').replace(/\n/g, ' '),
     ]));
   }

@@ -7,6 +7,8 @@
 //     guardado es el de un lado, nunca la suma.
 //   · Cada registro conserva el nombre original con el que se escribió.
 
+import { ENLACE_INICIAL } from './catalogo-inicial.js';
+
 export const SCHEMA = 2;
 
 export const nuevoId = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -441,8 +443,24 @@ export function migrarV1(v1) {
   }
 
   estado.ejercicios = [...cat.values()];
+  enlazarConCatalogo(estado.ejercicios);
   estado.medidas = migrarMedidasV1(v1.mc_meas, v1.mc_meas_sites);
   return estado;
+}
+
+// Rellena grupo muscular e imagen desde la tabla de enlace. Se estaba quedando
+// sin hacer: la columna "Grupo muscular" del CSV salía vacía en 16 de 17
+// ejercicios, y el filtro por grupo del buscador tampoco los encontraba.
+export function enlazarConCatalogo(ejercicios) {
+  let n = 0;
+  for (const ej of ejercicios) {
+    const c = ENLACE_INICIAL[ej.nombre] ?? ej.alias?.map(a => ENLACE_INICIAL[a]).find(Boolean);
+    if (!c) continue;
+    if (!ej.grupo) { ej.grupo = c.grupo; n++; }
+    ej.catalogId ??= c.catalogId;
+    ej.mediaId ??= c.media;
+  }
+  return n;
 }
 
 // El formato viejo era { fecha: [{name, val}] } con los nombres sueltos. Aquí

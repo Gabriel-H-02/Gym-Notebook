@@ -7,7 +7,8 @@
 
 import { db } from './db.js';
 import { fotosParaCopia, restaurarFotos } from './fotos.js';
-import { estadoInicial, migrarV1, migrarMedidasV1, leerV1DelNavegador, SCHEMA } from './model.js';
+import { estadoInicial, migrarV1, migrarMedidasV1, enlazarConCatalogo,
+  leerV1DelNavegador, SCHEMA } from './model.js';
 
 const CLAVE = 'estado';
 const CLAVE_BORRADOR = 'borrador';
@@ -34,6 +35,7 @@ export async function cargar() {
       estado.medidas = migrarMedidasV1(estado.medidas, null);
     }
     await rellenarDescansos();
+    await rellenarGrupos();
   } else if (guardado) {
     estado = { ...estadoInicial(), ...guardado, schema: SCHEMA };
   } else {
@@ -70,6 +72,15 @@ async function rellenarDescansos() {
   }
   await db.set(CLAVE, estado);
   if (n) console.info(`Recuperados ${n} días de descanso del cuaderno anterior.`);
+}
+
+// El grupo muscular se quedaba sin rellenar al migrar. Se arregla al abrir,
+// sin tener que reimportar nada.
+async function rellenarGrupos() {
+  const n = enlazarConCatalogo(estado.ejercicios);
+  if (!n) return;
+  await db.set(CLAVE, estado);
+  console.info(`Asignado el grupo muscular a ${n} ejercicios.`);
 }
 
 // ------------------------------------------------------------------ guardado
