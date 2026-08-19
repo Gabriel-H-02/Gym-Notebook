@@ -547,3 +547,9 @@ body.con-timer { padding-bottom: calc(166px + env(safe-area-inset-bottom)); }
   justify-content: center; gap: 8px; }
 .ex-bloque .ic, .rt-unir .ic { opacity: .8; }
 .si .ic { display: inline-block; vertical-align: -2px; }
+
+/* ---------------------------------------------------------------- exportar */
+.exp-previa { font-family: 'Space Mono', monospace; font-size: 11px; line-height: 1.6;
+  min-height: 180px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+.sel-fila.activa .sel-nombre > span:first-child { color: var(--accent); }
+.save[disabled] { opacity: .4; pointer-events: none; }

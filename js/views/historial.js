@@ -1,12 +1,13 @@
 // Historial por semanas. Cada día se puede abrir para corregirlo o borrarlo,
 // que en la versión anterior no se podía.
 
-import { el, vaciar, aviso, confirmar } from '../ui.js';
+import { el, vaciar, aviso, confirmar, hoja, descargar, copiar } from '../ui.js';
 import { estado, actualizar } from '../store.js';
 import { porId, variante, mostrarPeso, textoIntensidad, fechaCorta, hoyISO,
   bloques, textoSerie } from '../model.js';
 import { editarDia } from './hoy.js';
 import { icono } from '../iconos.js';
+import { FORMATOS, RANGOS, fechasDe } from '../exportar.js';
 
 const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
@@ -63,6 +64,9 @@ export function pintarHistorial(cont, irA) {
     return;
   }
 
+  cont.append(el('button', { clase: 'addbtn con-ic', estilo: { marginBottom: '14px' },
+    onclick: () => abrirExportar() }, icono('descargar', { tam: 14 }), 'Exportar historial'));
+
   // La semana se pinta entera, con los siete días. Los que no tienen nada
   // salen igualmente, en gris: un hueco de tres días se ve de un vistazo, y
   // antes sencillamente desaparecía.
@@ -88,6 +92,92 @@ export function pintarHistorial(cont, irA) {
     }
   }
   cont.append(caja);
+}
+
+// Exportar: primero qué formato, luego qué tramo. En ese orden porque el
+// formato es la decisión que la gente ya trae pensada.
+function abrirExportar() {
+  let formato = FORMATOS[0];
+  let rango = '7';
+  let desde = '', hasta = '';
+
+  hoja('Exportar historial', (cuerpo, cerrar) => {
+    const resultado = el('div');
+
+    const pintar = () => {
+      vaciar(cuerpo);
+
+      cuerpo.append(el('span', { clase: 'label', texto: 'Formato' }));
+      const fs = el('div', { clase: 'sel-lista' });
+      for (const f of FORMATOS) {
+        fs.append(el('button', { clase: 'sel-fila' + (formato.id === f.id ? ' activa' : ''),
+          onclick: () => { formato = f; pintar(); } },
+          el('span', { clase: 'sel-nombre' },
+            el('span', { texto: f.nombre }),
+            el('span', { clase: 'sel-eq', texto: f.q })),
+          formato.id === f.id ? icono('ok', { tam: 16 }) : null));
+      }
+      cuerpo.append(fs);
+
+      cuerpo.append(el('span', { clase: 'label', estilo: { marginTop: '18px' }, texto: 'Qué tramo' }));
+      const rs = el('div', { clase: 'chips' });
+      for (const r of RANGOS) {
+        rs.append(el('button', { clase: 'chip' + (rango === r.id ? ' on' : ''), texto: r.nombre,
+          onclick: () => { rango = r.id; pintar(); } }));
+      }
+      cuerpo.append(rs);
+
+      if (rango === 'rango') {
+        const d = el('input', { type: 'date', value: desde });
+        const h = el('input', { type: 'date', value: hasta });
+        d.addEventListener('change', () => { desde = d.value; pintar(); });
+        h.addEventListener('change', () => { hasta = h.value; pintar(); });
+        cuerpo.append(el('div', { clase: 'row', estilo: { marginTop: '10px' } },
+          el('label', { clase: 'campo' }, el('span', { clase: 'label', texto: 'Desde' }), d),
+          el('label', { clase: 'campo' }, el('span', { clase: 'label', texto: 'Hasta' }), h)));
+      }
+
+      const fechas = fechasDe(rango, desde || null, hasta || null);
+      cuerpo.append(el('p', { clase: 'muted', estilo: { marginTop: '14px' },
+        texto: fechas.length
+          ? `${fechas.length} día${fechas.length === 1 ? '' : 's'}, de ${fechas[0]} a ${fechas.at(-1)}.`
+          : 'No hay nada en ese tramo.' }));
+
+      if (formato.ext === 'csv') {
+        cuerpo.append(el('p', { clase: 'muted',
+          texto: 'Preparado para Excel en español: separado por punto y coma y con coma decimal.' }));
+      }
+
+      cuerpo.append(el('button', { clase: 'save con-ic', estilo: { marginTop: '16px' },
+        disabled: !fechas.length ? true : null,
+        onclick: async () => {
+          const txt = formato.gen(fechas);
+          const nombre = `cuaderno-${formato.id}-${fechas[0]}_${fechas.at(-1)}.${formato.ext}`;
+          descargar(nombre, txt, formato.tipo + ';charset=utf-8');
+          aviso('Descargado');
+          if (formato.texto) { vaciar(resultado); resultado.append(cajaTexto(txt)); }
+        } }, icono('descargar', { tam: 16 }), 'Descargar'));
+
+      if (formato.texto) {
+        cuerpo.append(el('button', { clase: 'addbtn con-ic', onclick: async () => {
+          const txt = formato.gen(fechas);
+          aviso(await copiar(txt) ? 'Copiado al portapapeles' : 'No se ha podido copiar');
+          vaciar(resultado); resultado.append(cajaTexto(txt));
+        } }, icono('copiar', { tam: 14 }), 'Copiar'));
+      }
+
+      cuerpo.append(resultado);
+    };
+    pintar();
+  });
+}
+
+// Vista previa del texto, para poder revisarlo antes de mandarlo a nadie.
+function cajaTexto(txt) {
+  const t = el('textarea', { clase: 'exp-previa', readonly: true, rows: 12 });
+  t.value = txt;
+  return el('div', {},
+    el('span', { clase: 'label', estilo: { marginTop: '18px' }, texto: 'Esto es lo que sale' }), t);
 }
 
 const DIA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
